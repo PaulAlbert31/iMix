@@ -25,6 +25,16 @@ Multiple GPUs on cifar10 using a ResNet50:
 ```
 CUDA_VISIBLE_DEVICES=0,1 python main.py --save-dir CIFAR10_resnet50 --net resnet50 --dataset cifar10
 ```
+## Evaluate results using
+### kNN
+```
+CUDA_VISIBLE_DEVICES=0 python eval_knn.py CIFAR10_resnet50
+```
+### Linear finetuning
+```
+CUDA_VISIBLE_DEVICES=0 python eval_linear.py CIFAR10_resnet50
+```
+
 ## Results
 | Dataset | Network | kNN | linear |
 | -----------|-----------|------| ---- |
