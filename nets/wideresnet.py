@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 def conv3x3(i_c, o_c, stride=1):
     return nn.Conv2d(i_c, o_c, 3, stride, 1, bias=False)
@@ -51,11 +52,8 @@ class residual(nn.Module):
 
 class WRN(nn.Module):
     """ WRN28-width with leaky relu (negative slope is 0.1)"""
-    def __init__(self, width, num_classes, transform_fn=None, long=False, dataset=None):
+    def __init__(self, proj_size, width):
         super().__init__()
-        del dataset #compatibility
-        if long:
-            print('Training WRN with long features')
 
         self.init_conv = conv3x3(3, 16)
 
@@ -73,14 +71,14 @@ class WRN(nn.Module):
             [residual(filters[3], filters[3]) for _ in range(1, 4)]
         self.unit3 = nn.Sequential(*unit3)
 
-        if long:
-            self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d((2,1))]) 
-            
-            self.output = nn.Linear(filters[3]*2, num_classes)
-        else:
-            self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
-            
-            self.output = nn.Linear(filters[3], num_classes)
+        self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
+        #Linear
+        #self.linear = nn.Linear(filters[3], proj_size)
+        #Non linear
+        self.linear = nn.Sequential(nn.Linear(128, 256, bias=False),
+                                    nn.BatchNorm1d(256),
+                                    nn.ReLU(inplace=True),
+                                    nn.Linear(256, 128))
             
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -90,13 +88,10 @@ class WRN(nn.Module):
                 nn.init.constant_(m.bias, 0)
             elif isinstance(m, nn.Linear):
                 nn.init.xavier_normal_(m.weight)
-                nn.init.constant_(m.bias, 0)
-
-        self.transform_fn = transform_fn
+                if m.bias is not None:
+                    nn.init.constant_(m.bias, 0)
 
     def forward(self, x, return_feature=True, lin=0, lout=5):
-        if self.training and self.transform_fn is not None:
-            x = self.transform_fn(x)
         x = self.init_conv(x)
         x = self.unit1(x)
         x = self.unit2(x)
@@ -105,21 +100,16 @@ class WRN(nn.Module):
         
         f = f.view(f.shape[0],-1)
 
-        c = self.output(f.squeeze())
+        c = self.linear(f.squeeze())
+        c = F.normalize(c, p=2, dim=1)
 
-        if lout > 4:
-            return c, f.squeeze()
-        else:
-            return f.squeeze(), None
-
+        return c
+    
     def update_batch_stats(self, flag):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d):
                 m.update_batch_stats = flag
 
 
-def WRN28_2(**kwargs):
-    return WRN(width=2, **kwargs)
-
-def WRN28_10(**kwargs):
-    return WRN(width=2, **kwargs)
+def WRN28_2(proj_size):
+    return WRN(proj_size, width=2)

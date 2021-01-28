@@ -7,28 +7,6 @@ import os
 import csv
 from tqdm import tqdm
 
-
-def get_dataset():
-    # prepare datasets
-    mean = [0.4728, 0.4487, 0.4031]
-    std = [0.2744, 0.2663 , 0.2806]
-
-    # get transforms for training set
-    transform_train = cmd_datasets.get_transforms('train', mean, std)
-
-    # get transforms for test set
-    transform_test = cmd_datasets.get_transforms('test', mean, std)
-    
-    train_data, train_labels, val_data, val_labels, test_data, test_labels = make_dataset(root='/home/paul/Documents/miniImagenet/miniImagenet84/')
-
-    train = MiniImagenet84(train_data, train_labels, transform=transform_train)
-    val = MiniImagenet84(val_data, val_labels, transform=transform_test)
-    test = MiniImagenet84(test_data, test_labels, transform=transform_test)
-
-    return train, val, test
-
-
-
 class MiniImagenet84(Dataset):
     # including hard labels & soft labels
     def __init__(self, data, labels, transform=None, target_transform=None):

@@ -10,13 +10,6 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from torch.autograd import Variable
-
-try:
-    from torch.hub import load_state_dict_from_url
-except ImportError:
-    from torch.utils.model_zoo import load_url as load_state_dict_from_url
-
 class BasicBlock(nn.Module):
     expansion = 1
 
@@ -71,7 +64,7 @@ class Bottleneck(nn.Module):
 
 
 class ResNet(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=128):
+    def __init__(self, block, num_blocks, proj_size=128):
         super(ResNet, self).__init__()
         self.in_planes = 64
         
@@ -83,12 +76,12 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         self.pool = nn.AdaptiveAvgPool2d(1)
-        #self.linear = nn.Linear(512*block.expansion, num_classes)
+        #self.linear = nn.Linear(512*block.expansion, proj_size)
         #Non-linear
         self.linear = nn.Sequential(nn.Linear(512*block.expansion, 512*block.expansion*2, bias=False),
                                          nn.BatchNorm1d(int(512*block.expansion*2)),
                                          nn.ReLU(inplace=True),
-                                         nn.Linear(int(512*block.expansion*2), num_classes))
+                                         nn.Linear(int(512*block.expansion*2), proj_size))
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -100,51 +93,27 @@ class ResNet(nn.Module):
 
     def forward(self, x, lin=0, lout=5):
         out = F.relu(self.bn1(self.conv1(x)))
+        
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
+        
         out = self.pool(out)
         feat = out.view(out.size(0), -1)
-        if lout < 5:
-            return feat, None
+        
         out = self.linear(feat)
         out = F.normalize(out, p=2, dim=1)
         return out
 
 
-def ResNet18(pretrained=False, num_classes=10):
-    if pretrained:
-        model = ResNet(Bottleneck, [3,4,6,3], num_classes, True)
-        state_dict = load_state_dict_from_url("https://download.pytorch.org/models/resnet18-5c106cde.pth")
-        from collections import OrderedDict
-        new_state_dict = OrderedDict()
-        for k, v in state_dict.items():
-            name = k.replace("downsample", "shortcut") # remove `module.`
-            new_state_dict[name] = v    
-        model.load_state_dict(new_state_dict, strict=False)
-        return model
-    return ResNet(BasicBlock, [2,2,2,2], num_classes)
+def ResNet18(proj_size=10):
+    return ResNet(BasicBlock, [2,2,2,2], proj_size)
 
 def ResNet34(low_dim=128):
     return ResNet(BasicBlock, [3,4,6,3], low_dim)
 
-def ResNet50(pretrained=False, num_classes=10):
-    if pretrained:
-        model = ResNet(Bottleneck, [3,4,6,3], num_classes, True)
-        state_dict = load_state_dict_from_url("https://download.pytorch.org/models/resnet50-19c8e357.pth")
-        from collections import OrderedDict
-        new_state_dict = OrderedDict()
-        for k, v in state_dict.items():
-            name = k.replace("downsample", "shortcut") # remove `module.`
-            new_state_dict[name] = v
-        model.load_state_dict(new_state_dict, strict=False)
-        return model
-    return ResNet(Bottleneck, [3,4,6,3], num_classes)
+def ResNet50(proj_size=10):
+    return ResNet(Bottleneck, [3,4,6,3], proj_size)
 
-def test():
-    net = ResNet18()
-    y = net(Variable(torch.randn(1,3,32,32)))
-    print(y.size())
 
-# test()

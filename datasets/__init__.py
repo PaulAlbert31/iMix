@@ -1,7 +1,6 @@
 from datasets.cifar import CIFAR10, CIFAR100
 from datasets.miniimagenet import make_dataset, MiniImagenet84
 from mypath import Path
-import os
 
 def cifar10(regim='train', root=Path.db_root_dir('cifar10'), transform=None):
     return CIFAR10(root=root, train=regim=='train', download=False, transform=transform)
