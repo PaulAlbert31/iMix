@@ -76,7 +76,6 @@ class ResNet(nn.Module):
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
 
         self.pool = nn.AdaptiveAvgPool2d(1)
-        #self.linear = nn.Linear(512*block.expansion, proj_size)
         #Non-linear
         self.linear = nn.Sequential(nn.Linear(512*block.expansion, 512*block.expansion*2, bias=False),
                                          nn.BatchNorm1d(int(512*block.expansion*2)),
@@ -104,6 +103,7 @@ class ResNet(nn.Module):
         
         out = self.linear(feat)
         out = F.normalize(out, p=2, dim=1)
+
         return out
 
 

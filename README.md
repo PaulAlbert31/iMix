@@ -38,12 +38,13 @@ CUDA_VISIBLE_DEVICES=0 python eval_linear.py CIFAR10_resnet50
 ## Results
 | Dataset | Network | kNN | linear |
 | -----------|-----------|------| ---- |
-|CIFAR10|WideResNet28-2|
-|       |ResNet18|
-|       |ResNet50|
-|CIFAR100|WideResNet28-2|
-|        |ResNet18|
-|        |ResNet50|
+|CIFAR10|WideResNet28-2|||
+|       |ResNet18|91.40|93.86|
+|       |ResNet50|93.40|95.25|
+||
+|CIFAR100|WideResNet28-2|||
+|        |ResNet18|65.28|67.69|
+|        |ResNet50|69.40|74.47|
  
 ## Experiment using your own ... 
 ### Dataset

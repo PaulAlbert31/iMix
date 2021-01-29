@@ -38,7 +38,7 @@ if "net" in weights.keys():
 if "network" in weights.keys():
     weights = weights["network"]
     
-model.load_state_dict(weights, strict=True)
+model.load_state_dict(weights, strict=False)
 
 if dataset == 'cifar10':
     mean = [0.4914, 0.4822, 0.4465]
@@ -88,13 +88,14 @@ else:
 train_loader = torch.utils.data.DataLoader(trainset, batch_size=256, shuffle=True, **kwargs)
 test_loader = torch.utils.data.DataLoader(testset, batch_size=256, shuffle=False, **kwargs)
 
+#Uncomment the proper lines in the network definition
 model.module.linear = nn.Linear(np, nclass)
 model.cuda()
 
 epochs = 100
 best = 0
 criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, nesterov=True, weight_decay=5e-4)
+optimizer = torch.optim.SGD(model.parameters(), lr=0.1, momentum=0.9, weight_decay=5e-4)
 scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50,80], gamma=0.1)
 
 for eps in range(epochs):

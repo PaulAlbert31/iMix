@@ -132,4 +132,5 @@ with torch.no_grad():
         
         total += targets.size(0)
 
-    print("kNN accuracy", top1/total)
+    print("kNN accuracy", top1/total*100)
+    print(top1, total)

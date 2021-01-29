@@ -72,8 +72,7 @@ class WRN(nn.Module):
         self.unit3 = nn.Sequential(*unit3)
 
         self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
-        #Linear
-        #self.linear = nn.Linear(filters[3], proj_size)
+
         #Non linear
         self.linear = nn.Sequential(nn.Linear(128, 256, bias=False),
                                     nn.BatchNorm1d(256),
@@ -102,7 +101,6 @@ class WRN(nn.Module):
 
         c = self.linear(f.squeeze())
         c = F.normalize(c, p=2, dim=1)
-
         return c
     
     def update_batch_stats(self, flag):
