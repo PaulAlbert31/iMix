@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 def conv3x3(i_c, o_c, stride=1):
@@ -73,14 +72,13 @@ class WRN(nn.Module):
             [residual(filters[3], filters[3]) for _ in range(1, 4)]
         self.unit3 = nn.Sequential(*unit3)
 
-        if long:
-            self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d((2,1))]) 
-            
-            self.output = nn.Linear(filters[3]*2, num_classes)
-        else:
-            self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
-            
-            self.output = nn.Linear(filters[3], num_classes)
+
+        self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
+
+        self.output = nn.Sequential(nn.Linear(512*block.expansion, 512*block.expansion*2, bias=False),
+                                    nn.BatchNorm1d(int(512*block.expansion*2)),
+                                    nn.ReLU(inplace=True),
+                                    nn.Linear(int(512*block.expansion*2), num_classes))
             
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -106,11 +104,9 @@ class WRN(nn.Module):
         f = f.view(f.shape[0],-1)
 
         c = self.output(f.squeeze())
+        c = F.normalize(c, p=2, dim=1)
 
-        if lout > 4:
-            return c, f.squeeze()
-        else:
-            return f.squeeze(), None
+        return c
 
     def update_batch_stats(self, flag):
         for m in self.modules():

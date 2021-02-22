@@ -5,7 +5,6 @@
 import torchvision
 import numpy as np
 from PIL import Image
-import copy
 
 class CIFAR10(torchvision.datasets.CIFAR10):
     def __init__(self, root, train=True, transform=None, target_transform=None, download=False, reduced=None, rotations=False):

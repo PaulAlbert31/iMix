@@ -1,26 +1,19 @@
 import argparse
 import torch
-import torchvision
 from torchvision import transforms
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
-import numpy as np
 from tqdm import tqdm
 
-from utils import make_data_loader, create_save_folder, UnNormalize, multi_class_loss, mixup_data
+from utils import make_data_loader, mixup_data
 import os
 from torch.multiprocessing import set_sharing_strategy
 set_sharing_strategy("file_system")
 
-import random
-
-
 class Trainer(object):
     def __init__(self, args):
         self.args = args
-        
-        kwargs = {"num_classes":128}
+        kwargs = {"num_classes": 128}
 
         if args.net == "resnet18":
             from nets.resnet import ResNet18
@@ -80,14 +73,15 @@ class Trainer(object):
             logits = torch.div(torch.matmul(z_i, z_j.t()), 0.2) #Contrastive temp
             loss = lam * self.criterion(logits, torch.arange(bsz).cuda()) + (1 - lam) * self.criterion(logits, mix_index.cuda())
             if i % 5 == 0:
-                tbar.set_description("Training iMix, train_loss {:.2f}".format(loss.item()))
-                
+                tbar.set_description("Training iMix, train loss {:.2f}, lr {:.3f}".format(loss.item(), self.optimizer.param_groups[0]['lr']))                
             # compute gradient and do SGD step
             loss.backward()
             self.optimizer.step()
             self.optimizer.zero_grad() 
-
+        self.scheduler.step()
         print("Epoch: {0}".format(epoch))
+        torch.save({'best':self.best, 'epoch':self.epoch, 'net':self.model.state_dict()}, os.path.join(self.args.save_dir, "last_model.pth.tar"))
+        torch.save(self.optimizer.state_dict(), os.path.join(self.args.save_dir, "last_optimizer.pth.tar"))
 
     def get_train_features(self):
         self.model.eval()
@@ -107,11 +101,11 @@ class Trainer(object):
         if self.args.dataset == 'miniimagenet':
             size = 84
                     
-        self.train_loader.dataset.transform = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(size),
-            torchvision.transforms.CenterCrop(size),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean, std)
+        self.train_loader.dataset.transform = transforms.Compose([
+            transforms.Resize(size),
+            transforms.CenterCrop(size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
         ])
         with torch.no_grad():
             tbar = tqdm(self.train_loader)
@@ -186,7 +180,7 @@ class Trainer(object):
         if self.best <= top1/total:
             self.best = top1/total
             self.best_epoch = self.epoch
-            torch.save(self.model.state_dict(), os.path.join(self.args.save_dir, "best_model.pth.tar"))
+            torch.save({'best':self.best, 'epoch':self.epoch, 'net':self.model.state_dict()}, os.path.join(self.args.save_dir, "best_model.pth.tar"))
             torch.save(self.optimizer.state_dict(), os.path.join(self.args.save_dir, "best_optimizer.pth.tar"))
             
         return top1/total
@@ -250,6 +244,7 @@ def main():
     parser.add_argument("--save-dir", type=str, default="")
     parser.add_argument("--no-cuda", action="store_true", default=False, help="No cuda")
     parser.add_argument("--seed", default=-1, type=int)
+    parser.add_argument("--resume", default=None, type=str)
 
     args = parser.parse_args()
     #For reproducibility purposes
@@ -259,14 +254,27 @@ def main():
 
     if not os.path.isdir(args.save_dir):
         os.mkdir(args.save_dir)
+
+    if args.steps is None:
+        args.steps = [2000, 3000]
         
     args.cuda = not args.no_cuda
     
     torch.manual_seed(args.seed)
     
     _trainer = Trainer(args)
+    start_ep = 0
+    if args.resume is not None:
+        l = torch.load(args.resume)
+        start_ep = l['epoch']
+        _trainer.best = l['best']
+        _trainer.best_epoch = l['epoch']
+        _trainer.model.load_state_dict(l['net'])
+        _trainer.optimizer.load_state_dict(torch.load(args.resume.replace("model","optimizer")))
+        for _ in range(start_ep):
+            _trainer.scheduler.step()
 
-    for eps in range(args.epochs):
+    for eps in range(start_ep, args.epochs):
         _trainer.train(eps)
         if eps % 1 == 0:
             _trainer.kNN()

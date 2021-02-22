@@ -11,6 +11,6 @@ def cifar100(regim='train', root=Path.db_root_dir('cifar100'), transform=None):
 
 def miniimagenet(root=Path.db_root_dir('miniimagenet'), transform=None, transform_test=None):
     train_data, train_labels, val_data, val_labels, test_data, test_labels = make_dataset(root=root)
-    trainset = MiniImagenet84(train_data, train_labels, transform=transform)
-    testset = MiniImagenet84(val_data, val_labels, transform=transform_test)
+    trainset = MiniImagenet84(train_data, train_labels, train=True, transform=transform)
+    testset = MiniImagenet84(val_data, val_labels, train=False, transform=transform_test)
     return trainset, testset

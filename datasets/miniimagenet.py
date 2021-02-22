@@ -1,53 +1,26 @@
-import torchvision as tv
 import numpy as np
 from PIL import Image
-import time
 from torch.utils.data import Dataset
 import os
 import csv
-from tqdm import tqdm
-
-
-def get_dataset():
-    # prepare datasets
-    mean = [0.4728, 0.4487, 0.4031]
-    std = [0.2744, 0.2663 , 0.2806]
-
-    # get transforms for training set
-    transform_train = cmd_datasets.get_transforms('train', mean, std)
-
-    # get transforms for test set
-    transform_test = cmd_datasets.get_transforms('test', mean, std)
-    
-    train_data, train_labels, val_data, val_labels, test_data, test_labels = make_dataset(root='/home/paul/Documents/miniImagenet/miniImagenet84/')
-
-    train = MiniImagenet84(train_data, train_labels, transform=transform_train)
-    val = MiniImagenet84(val_data, val_labels, transform=transform_test)
-    test = MiniImagenet84(test_data, test_labels, transform=transform_test)
-
-    return train, val, test
-
 
 
 class MiniImagenet84(Dataset):
     # including hard labels & soft labels
-    def __init__(self, data, labels, transform=None, target_transform=None):
-        self.train_data, self.train_labels =  data, labels
+    def __init__(self, data, labels, train=True, transform=None):
+        self.train_data, self.targets =  data, labels
         self.transform = transform
-        self.target_transform = target_transform
+        self.train = train
         
     def __getitem__(self, index):
-        img, target = self.train_data[index], self.train_labels[index]
+        img, target = self.train_data[index], self.targets[index]
             
         img = Image.open(img)
 
-        if self.transform is not None:
-            img = self.transform(img)
-            
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-        sample = {'image':img, 'target':target, 'index':index}
-        return sample
+        if self.train:
+            return {'image1':self.transform(img), 'image2': self.transform(img), 'target':target, 'index':index}
+
+        return {'image':self.transform(img), 'target': target, 'index':index}
 
 
     def __len__(self):
