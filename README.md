@@ -38,11 +38,11 @@ CUDA_VISIBLE_DEVICES=0 python eval_linear.py CIFAR10_resnet50
 ## Results
 | Dataset | Network | kNN | linear |
 | -----------|-----------|------| ---- |
-|CIFAR10|WideResNet28-2|||
+|CIFAR10|WideResNet28-2|81.06|81.13|
 |       |ResNet18|91.40|93.86|
 |       |ResNet50|93.40|95.25|
 ||
-|CIFAR100|WideResNet28-2|||
+|CIFAR100|WideResNet28-2|50.77|44.30|
 |        |ResNet18|65.28|67.69|
 |        |ResNet50|69.40|74.47|
  
@@ -51,8 +51,6 @@ CUDA_VISIBLE_DEVICES=0 python eval_linear.py CIFAR10_resnet50
 Define you dataset in the dataset folder using the [pytorch templates](https://pytorch.org/tutorials/beginner/data_loading_tutorial.html) and the existing files in the [datasets](https://github.com/PaulAlbert31/iMix/tree/main/datasets) folder and add a call in the [`__init__.py`](https://github.com/PaulAlbert31/iMix/blob/main/datasets/__init__.py) file. 
 ### Network
 Add you network in the net folder and call it at the beginning of [`main.py`](https://github.com/PaulAlbert31/iMix/blob/main/main.py). Don't forget to add a non-linear projection layer for optimal results
-
-StackEdit stores your files in your browser, which means all your files are automatically saved locally and are accessible **offline!**
 
 ## Cite the original paper
 ```
