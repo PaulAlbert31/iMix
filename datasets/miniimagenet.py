@@ -4,7 +4,6 @@ from torch.utils.data import Dataset
 import os
 import csv
 
-
 class MiniImagenet84(Dataset):
     # including hard labels & soft labels
     def __init__(self, data, labels, train=True, transform=None):

@@ -18,7 +18,7 @@ class CIFAR10(torchvision.datasets.CIFAR10):
         img = Image.fromarray(img)
 
         if self.train:
-            return {'image1':self.transform(img), 'image2': self.transform(img), 'index':index}
+            return {'image1':self.transform(img), 'image2': self.transform(img), 'target':target, 'index':index}
         
         return {'image':self.transform(img), 'target': target, 'index':index}
             
@@ -36,6 +36,6 @@ class CIFAR100(torchvision.datasets.CIFAR100):
         img = Image.fromarray(img)
             
         if self.train:
-            return {'image1':self.transform(img), 'image2': self.transform(img), 'index':index}
+            return {'image1':self.transform(img), 'image2': self.transform(img), 'target':target, 'index':index}
         
         return {'image':self.transform(img), 'target': target, 'index':index}

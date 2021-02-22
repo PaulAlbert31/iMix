@@ -1,6 +1,5 @@
 import torch
 import torchvision.transforms as transforms
-import os
 import datasets
 import numpy as np
 
@@ -65,13 +64,8 @@ def make_data_loader(args, no_aug=False, transform=None, **kwargs):
     elif args.dataset == "miniimagenet":
         trainset, testset = datasets.miniimagenet(transform=transform_train, transform_test=transform_test)
     else:
-        raise NotImplementedError
+        raise NotImplementedError("Dataset {} in not implemented".format(args.dataset))
     
-    if no_aug:
-        train_loader =  torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=False, **kwargs) #Sequential loader for sample loss tracking
-    else:
-        train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, **kwargs) #Normal training
-        
+    train_loader = torch.utils.data.DataLoader(trainset, batch_size=args.batch_size, shuffle=True, **kwargs)        
     test_loader = torch.utils.data.DataLoader(testset, batch_size=args.batch_size, shuffle=False, **kwargs)
-        
     return train_loader, test_loader
