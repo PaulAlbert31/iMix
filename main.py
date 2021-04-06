@@ -197,14 +197,9 @@ def main():
     #For reproducibility purposes
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
-    args.steps = [2000, 3000]
     
-
     if not os.path.isdir(args.save_dir):
         os.mkdir(args.save_dir)
-
-    if args.steps is None:
-        args.steps = [2000, 3000]
         
     args.cuda = not args.no_cuda
     
