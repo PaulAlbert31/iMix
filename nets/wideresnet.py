@@ -70,15 +70,6 @@ class WRN(nn.Module):
             [residual(filters[3], filters[3]) for _ in range(1, 4)]
         self.unit3 = nn.Sequential(*unit3)
 
-<<<<<<< HEAD
-
-        self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
-
-        self.output = nn.Sequential(nn.Linear(512*block.expansion, 512*block.expansion*2, bias=False),
-                                    nn.BatchNorm1d(int(512*block.expansion*2)),
-                                    nn.ReLU(inplace=True),
-                                    nn.Linear(int(512*block.expansion*2), num_classes))
-=======
         self.unit4 = nn.Sequential(*[BatchNorm2d(filters[3]), relu(), nn.AdaptiveAvgPool2d(1)]) 
 
         #Non linear
@@ -86,7 +77,6 @@ class WRN(nn.Module):
                                     nn.BatchNorm1d(256),
                                     nn.ReLU(inplace=True),
                                     nn.Linear(256, 128))
->>>>>>> 06479df535ec898466906de82e159c8d323975e5
             
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
@@ -107,19 +97,12 @@ class WRN(nn.Module):
         f = self.unit4(x)
         
         f = f.view(f.shape[0],-1)
+        f = self.linear(f)
 
-<<<<<<< HEAD
-        c = self.output(f.squeeze())
         c = F.normalize(c, p=2, dim=1)
 
-        return c
-
-=======
-        c = self.linear(f.squeeze())
-        c = F.normalize(c, p=2, dim=1)
         return c
     
->>>>>>> 06479df535ec898466906de82e159c8d323975e5
     def update_batch_stats(self, flag):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d):
