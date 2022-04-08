@@ -62,13 +62,17 @@ class Trainer(object):
             img1, img2 = sample["image1"].cuda(), sample["image2"].cuda()
             bsz = img1.shape[0]
             labels = torch.zeros(len(img1))
-            img1, _, _, lam, mix_index = mixup_data(img1, labels, 1.)
+            if not self.args.no_mix:
+                img1, _, _, lam, mix_index = mixup_data(img1, labels, 1.)
 
             z_i = self.model(img1)
             z_j = self.model(img2)
                     
             logits = torch.div(torch.matmul(z_i, z_j.t()), 0.2) #Contrastive temp
-            loss = lam * self.criterion(logits, torch.arange(bsz).cuda()) + (1 - lam) * self.criterion(logits, mix_index.cuda())
+            if not self.args.no_mix:
+                loss = lam * self.criterion(logits, torch.arange(bsz).cuda()) + (1 - lam) * self.criterion(logits, mix_index.cuda())
+            else:
+                loss = self.criterion(logits, torch.arange(bsz).cuda())
             if i % 5 == 0:
                 tbar.set_description("Training iMix, train loss {:.2f}, lr {:.3f}".format(loss.item(), self.optimizer.param_groups[0]['lr']))
             # compute gradient and do SGD step
@@ -98,11 +102,11 @@ class Trainer(object):
         if self.args.dataset == 'miniimagenet':
             size = 84
         original_transforms = copy.deepcopy(self.train_loader.dataset.transform)
-        self.train_loader.dataset.transform = torchvision.transforms.Compose([
-            torchvision.transforms.Resize(size),
-            torchvision.transforms.CenterCrop(size),
-            torchvision.transforms.ToTensor(),
-            torchvision.transforms.Normalize(mean, std)
+        self.train_loader.dataset.transform = transforms.Compose([
+            transforms.Resize(size),
+            transforms.CenterCrop(size),
+            transforms.ToTensor(),
+            transforms.Normalize(mean, std)
         ])
         with torch.no_grad():
             tbar = tqdm(self.train_loader)
@@ -192,6 +196,7 @@ def main():
     parser.add_argument("--resume", default=None, type=str)
     parser.add_argument("--proj-size", default=128, type=int)
     parser.add_argument("--no-eval", default=False, action='store_true')
+    parser.add_argument("--no-mix", default=False, action='store_true')
 
     args = parser.parse_args()
     #For reproducibility purposes

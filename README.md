@@ -19,6 +19,11 @@ Resume training
 CUDA_VISIBLE_DEVICES=0 python main.py --save-dir CIFAR100_resnet18 --net resnet18 --dataset cifar100 --resume CIFAR100_resnet18/last_model.pth.tar
 ```
 
+## N-pairs only
+```
+CUDA_VISIBLE_DEVICES=0 python main.py --save-dir CIFAR100_resnet18 --net resnet18 --dataset cifar100 --no-mix
+```
+
 Multi-gpu is supported using the [torch.nn.DataParallel](https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html) module.
 
 Multiple GPUs on cifar10 using a ResNet50:
